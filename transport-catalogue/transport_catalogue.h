@@ -1,4 +1,3 @@
-// место для вашего кода
 #pragma once
 
 #include "geo.h"
@@ -46,10 +45,10 @@ class TransportCatalogue {
 		void AddBus(const std::string name, const std::vector<std::string>& stops, const bool is_circular);
 
 		//Ищет маршрут автобуса
-		const Bus* FindBus(const std::string& name) const;
+		const Bus* FindBus(const std::string_view name) const;
 
 		//Выдает инфорамацию о маршрутах автобусов
-		const BusInfo GetBusInfo(const std::string& name) const;
+		const BusInfo GetBusInfo(const std::string_view name) const;
 
 		//Получение списка автобусов, проходящих через остановку
 		const std::set<std::string> GetBusesByStop(const std::string& stop_name) const;
