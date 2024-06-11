@@ -57,8 +57,8 @@ void PrintStat(const Transport::TransportCatalogue& transport_catalogue,
                 output << "Stop " << request.name << ": no buses\n";
             } else {
                 output << "Stop " << request.name << ": buses";
-                for (const auto& bus : buses) {
-                    output << " " << bus;
+                for (const auto& bus_name : buses) { 
+                    output << " " << bus_name; 
                 }
                 output << "\n";
             }

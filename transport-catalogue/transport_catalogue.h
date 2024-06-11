@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <set>
@@ -48,10 +49,10 @@ class TransportCatalogue {
 		const Bus* FindBus(const std::string_view name) const;
 
 		//Выдает инфорамацию о маршрутах автобусов
-		const BusInfo GetBusInfo(const std::string_view name) const; //изменил string на string_view
+		const BusInfo GetBusInfo(const std::string_view name) const;
 
 		//Получение списка автобусов, проходящих через остановку
-		const std::set<std::string> GetBusesByStop(const std::string& stop_name) const;
+		const std::set<std::string_view>& GetBusesByStop(const std::string& stop_name) const;
 	private:
 		std::deque<Stop> stops_;
 		std::unordered_map<std::string_view, const Stop*> stopname_to_stop_;
@@ -59,7 +60,7 @@ class TransportCatalogue {
 		std::deque<Bus> buses_;
 		std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
 
-		std::unordered_map<const Stop*, std::set<std::string>> stop_to_buses_;
+		std::unordered_map<const Stop*, std::set<std::string_view>> stop_to_buses_;
 };
 	}//namespace Transport
 }//namespace TransportCatalog

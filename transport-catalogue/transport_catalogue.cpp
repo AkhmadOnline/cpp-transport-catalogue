@@ -26,8 +26,8 @@ void TransportCatalogue::AddBus(const std::string name, const std::vector<std::s
         bus_stops.push_back(stopname_to_stop_.at(stop_name)); 
     } 
     busname_to_bus_[buses_.back().name] = &buses_.back(); 
-    for (const auto& stop_name : stops) { 
-        stop_to_buses_[stopname_to_stop_.at(stop_name)].insert(name);  
+    for (const auto& stop_name : stops) {
+        stop_to_buses_[stopname_to_stop_.at(stop_name)].insert(buses_.back().name); 
     } 
 } 
 
@@ -60,11 +60,12 @@ const BusInfo TransportCatalogue::GetBusInfo(const std::string_view name) const 
     return info;
 }
 
-const std::set<std::string> TransportCatalogue::GetBusesByStop(const std::string& stop_name) const { 
+const std::set<std::string_view>& TransportCatalogue::GetBusesByStop(const std::string& stop_name) const { 
+    static std::set<std::string_view> empty_set;
     if (const auto* stop = FindStop(stop_name); stop && stop_to_buses_.count(stop) > 0) {  
         return stop_to_buses_.at(stop); 
     } else { 
-        return {};  
+        return empty_set;  
     } 
 } 
 } // namespace Transport
