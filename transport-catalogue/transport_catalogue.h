@@ -48,7 +48,7 @@ class TransportCatalogue {
 		const Bus* FindBus(const std::string_view name) const;
 
 		//Выдает инфорамацию о маршрутах автобусов
-		const BusInfo GetBusInfo(const std::string_view name) const;
+		const BusInfo GetBusInfo(const std::string_view name) const; //изменил string на string_view
 
 		//Получение списка автобусов, проходящих через остановку
 		const std::set<std::string> GetBusesByStop(const std::string& stop_name) const;
