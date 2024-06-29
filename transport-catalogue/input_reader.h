@@ -1,4 +1,3 @@
-// место для вашего кода
 #pragma once
 #include <string>
 #include <string_view>
@@ -38,6 +37,7 @@ public:
 
 private:
     std::vector<CommandDescription> commands_;
+    std::unordered_map<std::string, std::unordered_map<std::string, int>> stop_distances_;
 };
 } // namespace Input
 } // namespace TransportCatalog

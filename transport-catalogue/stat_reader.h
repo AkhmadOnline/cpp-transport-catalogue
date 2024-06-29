@@ -1,4 +1,3 @@
-// место для вашего кода
 #pragma once
 
 #include <iosfwd>

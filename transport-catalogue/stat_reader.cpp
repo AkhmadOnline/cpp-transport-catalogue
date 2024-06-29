@@ -7,6 +7,7 @@ using namespace std;
 namespace TransportCatalog {
 namespace Stat { 
 namespace detail {
+
 enum class RequestType {
     BUS,
     STOP,
@@ -46,7 +47,8 @@ void PrintStat(const Transport::TransportCatalogue& transport_catalogue,
         if (const auto info = transport_catalogue.GetBusInfo(request.name); info.stops_on_route > 0) {
             output << "Bus " << request.name << ": " << info.stops_on_route
                    << " stops on route, " << info.unique_stops << " unique stops, "
-                   << setprecision(6) << info.route_length << " route length\n";
+                   << setprecision(6) << info.route_length << " route length, "
+                   << setprecision(6) << info.curvature << " curvature\n";
         } else {
             output << "Bus " << request.name << ": not found\n";
         }
@@ -67,12 +69,13 @@ void PrintStat(const Transport::TransportCatalogue& transport_catalogue,
         }
     } 
 }
-}//namespace detail
 
-void ParseAndPrintStat(const Transport::TransportCatalogue& transport_catalogue, std::string_view request,
-                       std::ostream& output) {
+} // namespace detail
+
+void ParseAndPrintStat(const Transport::TransportCatalogue& transport_catalogue, std::string_view request, std::ostream& output) {
     auto parsed_request = detail::ParseRequest(request);
     detail::PrintStat(transport_catalogue, parsed_request, output);
 }
+
 } // namespace Stat
 } // namespace TransportCatalog

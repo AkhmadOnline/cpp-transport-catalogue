@@ -1,11 +1,13 @@
 #include "transport_catalogue.h"
 
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
 namespace TransportCatalog {
 namespace Transport {
+
 void TransportCatalogue::AddStop(const string& name, const Geo::Coordinates& coordinates) {
     stops_.push_back({name, coordinates});
     stopname_to_stop_[stops_.back().name] = &stops_.back();
@@ -31,7 +33,6 @@ void TransportCatalogue::AddBus(const std::string name, const std::vector<std::s
     } 
 } 
 
-
 const Bus* TransportCatalogue::FindBus(const std::string_view name) const {
     if (busname_to_bus_.count(name)) {
         return busname_to_bus_.at(name);
@@ -44,18 +45,40 @@ const BusInfo TransportCatalogue::GetBusInfo(const std::string_view name) const 
     if (const auto* bus = FindBus(name); bus) {
         set<string> unique_stops;
         info.stops_on_route = bus->stops.size();
-        for (size_t i = 0; i < bus->stops.size() - 1; ++i) {
-            info.route_length += ComputeDistance(bus->stops[i]->coordinates, bus->stops[i + 1]->coordinates);
+        //std::cout << "Route for bus " << name << ":" << std::endl;
+        
+        size_t last_stop = bus->is_circular ? bus->stops.size() - 1 : bus->stops.size() / 2;
+        
+        for (size_t i = 0; i < last_stop; ++i) {
+            int distance = GetDistance(bus->stops[i], bus->stops[i + 1]);
+            if (distance == 0) {
+                distance = GetDistance(bus->stops[i + 1], bus->stops[i]);
+            }
+            //std::cout << "  " << bus->stops[i]->name << " -> " << bus->stops[i + 1]->name 
+            //          << ": " << distance << "m" << std::endl;
+            info.route_length += distance;
+            info.geo_length += ComputeDistance(bus->stops[i]->coordinates, bus->stops[i + 1]->coordinates);
             unique_stops.insert(bus->stops[i]->name);
         }
-        unique_stops.insert(bus->stops.back()->name);
+        unique_stops.insert(bus->stops[last_stop]->name);
 
-        // Для некольцевых маршрутов добавляем расстояние от последней до первой остановки
-        if (!bus->is_circular) {  
-            info.route_length += ComputeDistance(bus->stops.back()->coordinates, bus->stops.front()->coordinates); 
+        if (!bus->is_circular) {
+            for (size_t i = last_stop; i > 0; --i) {
+                int distance = GetDistance(bus->stops[i], bus->stops[i - 1]);
+                if (distance == 0) {
+                    distance = GetDistance(bus->stops[i - 1], bus->stops[i]);
+                }
+                info.route_length += distance;
+                info.geo_length += ComputeDistance(bus->stops[i]->coordinates, bus->stops[i - 1]->coordinates);
+            }
         }
 
         info.unique_stops = unique_stops.size();
+        if (info.geo_length > 0) {
+            info.curvature = info.route_length / info.geo_length;
+        } else {
+            info.curvature = 1;
+        }
     }
     return info;
 }
@@ -68,5 +91,25 @@ const std::set<std::string_view>& TransportCatalogue::GetBusesByStop(const std::
         return empty_set;  
     } 
 } 
+
+void TransportCatalogue::SetDistance(const Stop* from, const Stop* to, int distance) {
+    distances_[{from, to}] = distance;
+    //distances_[{to, from}] = distance;
+}
+
+int TransportCatalogue::GetDistance(const Stop* from, const Stop* to) const {
+    if (auto it = distances_.find({from, to}); it != distances_.end()) {
+        return it->second;
+    }
+    if (auto it = distances_.find({to, from}); it != distances_.end()) {
+        return it->second;
+    }
+    //std::cerr << "Warning: No distance found between " << from->name << " and " << to->name << std::endl;
+    return 0;
+}
+
+const std::unordered_map<std::string_view, const Stop*>& TransportCatalogue::GetAllStops() const {
+    return stopname_to_stop_;
+}
 } // namespace Transport
 } // namespace TransportCatalog

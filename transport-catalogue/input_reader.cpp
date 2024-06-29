@@ -1,4 +1,3 @@
-// место для вашего кода
 #include "input_reader.h"
 
 #include <algorithm>
@@ -61,6 +60,34 @@ std::vector<std::string_view> Split(std::string_view string, char delim) {
 
     return result;
 }
+
+std::unordered_map<std::string, int> ParseStopDistances(std::string_view str) {
+    std::unordered_map<std::string, int> distances;
+    while (!str.empty()) {
+        auto pos = str.find(',');
+        auto sub_str = str.substr(0, pos);
+        auto m_pos = sub_str.find('m');
+        if (m_pos != sub_str.npos) {
+            auto dist = std::stoi(std::string(sub_str.substr(0, m_pos)));
+            auto stop_name = std::string(Trim(sub_str.substr(m_pos + 1)));
+            // Удаляем префикс "to " из имени остановки
+            if (stop_name.substr(0, 3) == "to ") {
+                stop_name = stop_name.substr(3);
+            }
+            distances[stop_name] = dist;
+        }
+        if (pos == str.npos) break;
+        str.remove_prefix(pos + 1);
+    }
+    return distances;
+}
+
+std::pair<std::string_view, std::string_view> SplitLatLngAndDistances(std::string_view description) {
+    auto pos = description.find(',');
+    auto coords_end = description.find_first_of(',', pos + 1);
+    auto distances_str = description.substr(coords_end + 1);
+    return {description.substr(0, coords_end), distances_str};
+}
 } // namespace detail
 
 /**
@@ -103,25 +130,41 @@ CommandDescription ParseCommandDescription(std::string_view line) {
 
 void InputReader::ParseLine(std::string_view line) {
     auto command_description = ParseCommandDescription(line);
-    if (command_description) {
-        commands_.push_back(std::move(command_description));
+    if (command_description.command == "Stop") {
+        auto [lat_lng, distances_str] = detail::SplitLatLngAndDistances(command_description.description);
+        auto distances = detail::ParseStopDistances(distances_str);
+        stop_distances_[command_description.id] = distances;
+        commands_.push_back(command_description);
+    } else if (command_description.command == "Bus") {
+        commands_.push_back(command_description);
     }
 }
 
-void InputReader::ApplyCommands([[maybe_unused]] Transport::TransportCatalogue& catalogue) const {
-    // Реализуйте метод самостоятельно
+void InputReader::ApplyCommands(Transport::TransportCatalogue& catalogue) const {
     for (const auto& command : commands_) {
         if (command.command == "Stop") {
             auto [lat, lng] = detail::ParseCoordinates(command.description);
             catalogue.AddStop(command.id, {lat, lng});
-        } 
+        }
+    }
+
+    for (const auto& [stop_name, distances] : stop_distances_) {
+        const TransportCatalog::Transport::Stop* from = catalogue.FindStop(stop_name);
+        for (const auto& [to_name, distance] : distances) {
+            const TransportCatalog::Transport::Stop* to = catalogue.FindStop(to_name);
+            catalogue.SetDistance(from, to, distance);
+        }
     }
 
     for (const auto& command : commands_) {
         if (command.command == "Bus") {
             auto stops = ParseRoute(command.description);
             std::vector<std::string> stop_names(stops.begin(), stops.end());
-            catalogue.AddBus(command.id, stop_names, command.description.find('>') != std::string::npos);
+            bool is_circular = command.description.find('>') != std::string::npos;
+            if (is_circular && stop_names.front() != stop_names.back()) {
+                stop_names.push_back(stop_names.front());
+            }
+            catalogue.AddBus(command.id, stop_names, is_circular);
         }
     }
 }
