@@ -1,33 +1,31 @@
-// место для вашего кода
+#include "json.h"
+#include "map_renderer.h"
+#include "transport_catalogue.h"
+#include "json_reader.h"
+
 #include <iostream>
 #include <string>
-
-#include "input_reader.h"
-#include "stat_reader.h"
 
 using namespace std;
 
 int main() {
+    json::Document doc = json::Load(cin);
+    const auto& input = doc.GetRoot().AsMap();
+
     TransportCatalog::Transport::TransportCatalogue catalogue;
+    json_reader::FillTransportCatalogue(catalogue, input.at("base_requests").AsArray());
 
-    int base_request_count;
-    cin >> base_request_count >> ws;
+    const auto& render_settings = input.at("render_settings").AsMap();
+    RenderSettings settings = json_reader::ParseRenderSettings(render_settings);
 
-    {
-        TransportCatalog::Input::InputReader reader;
-        for (int i = 0; i < base_request_count; ++i) {
-            string line;
-            getline(cin, line);
-            reader.ParseLine(line);
-        }
-        reader.ApplyCommands(catalogue);
-    }
+    // Создаем JsonReader с настройками рендеринга:
+    json_reader::JsonReader reader(catalogue, settings); 
 
-    int stat_request_count;
-    cin >> stat_request_count >> ws;
-    for (int i = 0; i < stat_request_count; ++i) {
-        string line;
-        getline(cin, line);
-        TransportCatalog::Stat::ParseAndPrintStat(catalogue, line, cout);
-    }
+    // Обрабатываем запросы:
+    reader.ProcessRequests(doc);
+
+    // Выводим ответы в JSON:
+    json::Print(json::Document(reader.GetResponses()), cout);
+
+    return 0;
 }
