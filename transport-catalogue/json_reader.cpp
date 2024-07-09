@@ -95,10 +95,10 @@ json::Node JsonReader::ProcessMapRequest(const json::Dict& request) {
     map.Render(svg_stream);
     std::string svg_string = svg_stream.str();
 
-    return json::Dict{
-        {"map", json::Node(svg_string)},  // Экранируем SVG
+   return json::Node(json::Dict{
+        {"map", json::Node(svg_string)},
         {"request_id", id}
-    };
+    });
 }
 
 json::Node JsonReader::ProcessBusRequest(const json::Dict& request) {
@@ -113,13 +113,13 @@ json::Node JsonReader::ProcessBusRequest(const json::Dict& request) {
         };
     }
     
-    auto response = json::Dict{
+    auto response = json::Node(json::Dict{
         {"request_id", id},
         {"curvature", bus_info->curvature},
         {"route_length", bus_info->route_length},
         {"stop_count", bus_info->stops_on_route},
         {"unique_stop_count", bus_info->unique_stops}
-    };
+    });
     return response;
 }
 
@@ -145,10 +145,10 @@ json::Node JsonReader::ProcessStopRequest(const json::Dict& request) {
         buses.push_back(std::string(bus));
     }
     
-    return json::Dict{
+   return json::Node(json::Dict{
         {"request_id", id},
         {"buses", std::move(buses)}
-    };
+    });
 }
 
 const json::Array& JsonReader::GetResponses() const {

@@ -13,14 +13,14 @@ void TransportCatalogue::AddStop(const string& name, const Geo::Coordinates& coo
     stopname_to_stop_[stops_.back().name] = &stops_.back();
 }
 
-const Domain::Stop* TransportCatalogue::FindStop(const std::string& name) const {
+const Domain::Stop* TransportCatalogue::FindStop(const std::string_view name) const {
     if (stopname_to_stop_.count(name)) {
         return stopname_to_stop_.at(name);
     }
     return nullptr;
 }
 
-void TransportCatalogue::AddBus(const std::string name, const std::vector<std::string>& stops, const bool is_circular) { 
+void TransportCatalogue::AddBus(const std::string& name, const std::vector<std::string>& stops, const bool is_circular) { 
     buses_.push_back({name, {}, is_circular}); 
     auto& bus_stops = buses_.back().stops; 
     bus_stops.reserve(stops.size()); 

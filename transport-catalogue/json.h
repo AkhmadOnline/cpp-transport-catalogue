@@ -19,19 +19,10 @@ public:
     using runtime_error::runtime_error;
 };
 
-class Node {
+class Node : public std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string> {
 public:
    /* Реализуйте Node, используя std::variant */
-    using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
-
-    Node();
-    Node(Array array);
-    Node(Dict map);
-    Node(int value);
-    Node(double value);
-    Node(std::string value);
-    Node(bool value);
-    Node(std::nullptr_t);
+    using std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>::variant;
 
     bool IsInt() const;
     bool IsDouble() const;
@@ -49,13 +40,15 @@ public:
     const Array& AsArray() const;
     const Dict& AsMap() const;
 
-    const Value& GetValue() const { return value_; }
+    const Node& GetValue() const { return *this; }
 
-    bool operator==(const Node& other) const;
-    bool operator!=(const Node& other) const;
+    bool operator==(const Node& other) const {
+        return static_cast<const std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>&>(*this) == other;
+    }
 
-private:
-    Value value_;
+    bool operator!=(const Node& other) const {
+        return !(*this == other);
+    }
 };
 
 class Document {

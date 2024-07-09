@@ -20,10 +20,10 @@ public:
     void AddStop(const std::string& name, const Geo::Coordinates& coordinates);
     
     // Ищет остановку
-    const Domain::Stop* FindStop(const std::string& name) const;
+    const Domain::Stop* FindStop(const std::string_view name) const;
     
     // Добавляет маршрут автобуса
-    void AddBus(const std::string name, const std::vector<std::string>& stops, const bool is_circular);
+    void AddBus(const std::string& name, const std::vector<std::string>& stops, const bool is_circular);
     
     // Ищет маршрут автобуса
     const Domain::Bus* FindBus(const std::string_view name) const;

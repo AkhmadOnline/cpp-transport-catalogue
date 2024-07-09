@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <unordered_set>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -105,5 +106,12 @@ public:
     svg::Document RenderMap(const std::vector<const Domain::Bus*>& buses) const;
 
 private:
+    std::vector<const Domain::Stop*> GetUniqueStops(const std::vector<const Domain::Bus*>& buses) const;
+    std::vector<Geo::Coordinates> GetAllCoordinates(const std::vector<const Domain::Stop*>& stops) const;
+    SphereProjector CreateProjector(const std::vector<Geo::Coordinates>& all_coords) const;
+    void RenderBusLines(svg::Document& doc, const std::vector<const Domain::Bus*>& buses, const SphereProjector& projector) const;
+    void RenderBusLabels(svg::Document& doc, const std::vector<const Domain::Bus*>& buses, const SphereProjector& projector) const;
+    void RenderStopSymbols(svg::Document& doc, const std::vector<const Domain::Stop*>& stops, const SphereProjector& projector) const;
+    void RenderStopLabels(svg::Document& doc, const std::vector<const Domain::Stop*>& stops, const SphereProjector& projector) const;
     RenderSettings settings_;
 };
