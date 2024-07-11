@@ -3,6 +3,7 @@
 #include "request_handler.h"
 #include "transport_catalogue.h"
 #include "json.h"
+#include "json_builder.h"
 #include "map_renderer.h"
 
 namespace json_reader {
@@ -18,13 +19,14 @@ public:
 private:
     void ProcessBaseRequests(const json::Array& base_requests);
     void ProcessStatRequests(const json::Array& stat_requests);
-    json::Node ProcessMapRequest(const json::Dict& request);
     
     void AddStop(const json::Dict& stop_dict);
     void AddBus(const json::Dict& bus_dict);
     
-    json::Node ProcessBusRequest(const json::Dict& request);
-    json::Node ProcessStopRequest(const json::Dict& request);
+    void ProcessMapRequest(const json::Dict& request, json::Builder& response_builder);
+    void ProcessBusRequest(const json::Dict& request, json::Builder& response_builder);
+    void ProcessStopRequest(const json::Dict& request, json::Builder& response_builder);
+    
     std::vector<std::tuple<std::string, std::string, int>> distances_to_set_;
 
     TransportCatalog::Transport::TransportCatalogue& db_;
