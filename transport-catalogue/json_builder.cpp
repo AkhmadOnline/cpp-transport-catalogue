@@ -113,9 +113,9 @@ Builder& ArrayItemContext::EndArray() {
     return builder_.EndArray();
 }
 
-ValueAfterKeyContext KeyItemContext::Value(Node::Value value) {
+DictItemContext KeyItemContext::Value(Node::Value value) {
     builder_.Value(std::move(value));
-    return ValueAfterKeyContext(builder_);
+    return DictItemContext(builder_);
 }
 
 DictItemContext KeyItemContext::StartDict() {
@@ -125,13 +125,4 @@ DictItemContext KeyItemContext::StartDict() {
 ArrayItemContext KeyItemContext::StartArray() {
     return builder_.StartArray();
 }
-
-KeyItemContext ValueAfterKeyContext::Key(std::string key) {
-    return builder_.Key(std::move(key));
-}
-
-Builder& ValueAfterKeyContext::EndDict() {
-    return builder_.EndDict();
-}
-
 } // namespace json

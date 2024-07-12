@@ -11,7 +11,6 @@ class Builder;
 class DictItemContext;
 class ArrayItemContext;
 class KeyItemContext;
-class ValueAfterKeyContext;
 
 class BaseContext {
 public:
@@ -61,16 +60,9 @@ public:
 class KeyItemContext : public BaseContext {
 public:
     using BaseContext::BaseContext;
-    ValueAfterKeyContext Value(Node::Value value);
+    DictItemContext Value(Node::Value value);
     DictItemContext StartDict();
     ArrayItemContext StartArray();
-};
-
-class ValueAfterKeyContext : public BaseContext {
-public:
-    using BaseContext::BaseContext;
-    KeyItemContext Key(std::string key);
-    Builder& EndDict();
 };
 
 } // namespace json
