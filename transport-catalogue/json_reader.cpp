@@ -3,21 +3,15 @@
 
 namespace json_reader {
 
-JsonReader::JsonReader(TransportCatalog::Transport::TransportCatalogue& db, const RenderSettings& render_settings)
-    : db_(db), handler_(db), renderer_(render_settings) {}
+JsonReader::JsonReader(TransportCatalog::Transport::TransportCatalogue& db, 
+                       const RenderSettings& render_settings,
+                       const TransportRouter& router)
+    : db_(db), handler_(db), renderer_(render_settings), router_(router) {}
 
 void JsonReader::ProcessRequests(const json::Document& doc) {
     const json::Dict& root = doc.GetRoot().AsDict();
     ProcessBaseRequests(root.at("base_requests").AsArray());
     ProcessStatRequests(root.at("stat_requests").AsArray());
-}
-
-void JsonReader::SetDistances() {
-    for (const auto& [from, to, distance] : distances_to_set_) {
-        const Domain::Stop* from_ = db_.FindStop(from);
-        const Domain::Stop* to_ = db_.FindStop(to);
-        db_.SetDistance(from_, to_, distance);  
-    }
 }
 
 void JsonReader::ProcessBaseRequests(const json::Array& base_requests) {
@@ -30,7 +24,11 @@ void JsonReader::ProcessBaseRequests(const json::Array& base_requests) {
     }
     
     // Устанавливаем расстояния между остановками
-    SetDistances();
+    for (const auto& [from, to, distance] : distances_to_set_) {
+        const Domain::Stop* from_ = db_.FindStop(from);
+        const Domain::Stop* to_ = db_.FindStop(to);
+        db_.SetDistance(from_, to_, distance);  
+    }
     
     // Затем добавляем все маршруты
     for (const json::Node& request : base_requests) {
@@ -65,7 +63,6 @@ void JsonReader::AddBus(const json::Dict& bus_dict) {
     }
     bool is_roundtrip = bus_dict.at("is_roundtrip").AsBool();
     
-    //std::cerr << "DEBUG: Adding bus " << name << " with " << stops.size() << " stops" << std::endl;
     db_.AddBus(name, stops, is_roundtrip);
 }
 
@@ -80,6 +77,8 @@ void JsonReader::ProcessStatRequests(const json::Array& stat_requests) {
             ProcessStopRequest(req_map, response_builder);
         } else if (req_map.at("type").AsString() == "Map") {
             ProcessMapRequest(req_map, response_builder); 
+        } else if (req_map.at("type").AsString() == "Route") {
+            ProcessRouteRequest(req_map, response_builder);
         }
 
         responses_.push_back(response_builder.Build());
@@ -152,6 +151,40 @@ void JsonReader::ProcessStopRequest(const json::Dict& request, json::Builder& re
     response_builder.EndArray();
 
     response_builder.EndDict();
+}
+
+void JsonReader::ProcessRouteRequest(const json::Dict& request, json::Builder& response_builder) {
+    int id = request.at("id").AsInt();
+    std::string from = request.at("from").AsString();
+    std::string to = request.at("to").AsString();
+
+    auto route = router_.BuildRoute(from, to);
+
+    if (!route) {
+        response_builder.StartDict()
+            .Key("request_id").Value(id)
+            .Key("error_message").Value("not found")
+            .EndDict();
+        return;
+    }
+
+    response_builder.StartDict()
+        .Key("request_id").Value(id)
+        .Key("total_time").Value(route->total_time)
+        .Key("items").StartArray();
+
+    for (const auto& item : route->items) {
+        response_builder.StartDict()
+            .Key("type").Value(item.type == TransportRouter::RouteItem::Type::WAIT ? "Wait" : "Bus")
+            .Key(item.type == TransportRouter::RouteItem::Type::WAIT ? "stop_name" : "bus").Value(std::string(item.name))
+            .Key("time").Value(item.time);
+        if (item.type == TransportRouter::RouteItem::Type::BUS) {
+            response_builder.Key("span_count").Value(item.span_count);
+        }
+        response_builder.EndDict();
+    }
+
+    response_builder.EndArray().EndDict();
 }
 
 const json::Array& JsonReader::GetResponses() const {
@@ -240,4 +273,5 @@ svg::Color ParseColor(const json::Node& color_node) {
     }
     return svg::NoneColor;
 }
+
 } //namespace json_reader
